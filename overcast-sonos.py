@@ -59,24 +59,53 @@ def getMetadata(id, index, count):
     
     if id == 'root': 
         response = {'getMetadataResult': [
-            {'index': 0, 'count': 1, 'total': 1},
+            {'index': 0, 'count': 2, 'total': 2},
             {'mediaCollection': {
                 'id': 'episodes',
                 'title': 'All Active Episodes',
                 'itemType': 'container',
                 'canPlay': False 
             }},
-            # {'mediaCollection': {
-            #     'id': 'podcasts',
-            #     'title': 'Podcasts',
-            #     'itemType': 'container',
-            #     'canPlay': False 
-            # }},
+            {'mediaCollection': {
+                'id': 'podcasts',
+                'title': 'Podcasts',
+                'itemType': 'container',
+                'canPlay': False 
+            }},
         ]}
 
     elif id == 'episodes':
         episodes = overcast.get_active_episodes()
         response = {'getMetadataResult': [{'index': 0, 'count': len(episodes), 'total': len(episodes)}]}
+        for episode in episodes:
+            response['getMetadataResult'].append({'mediaMetadata': {
+                'id': 'episodes/' + episode['id'],
+                'title': episode['title'],
+                'mimeType': episode['audio_type'],
+                'itemType': 'track',
+                'trackMetadata': {
+                    'artist': episode['podcast_title'],
+                    'albumArtist': episode['podcast_title'],
+                    'genreId': 'podcast',
+                    'duration': episode['duration'],
+                }
+            }})
+    
+    elif id == 'podcasts':
+        podcasts = overcast.get_all_podcasts()
+        response = {'getMetadataResult': [{'index': 0, 'count': len(podcasts), 'total': len(podcasts)}]}
+        for podcast in podcasts:
+            response['getMetadataResult'].append({'mediaCollection': {
+                'id': 'podcasts/' + podcast['id'],
+                'title': podcast['title'],
+                'itemType': 'container',
+                'canPlay': False,
+            }})
+    
+    elif id.startswith('podcasts/'):
+        podcast_id = id.split('/', 1)[-1]
+        episodes = overcast.get_all_podcast_episodes(podcast_id)
+        response = {'getMetadataResult': [{'index': 0, 'count': len(episodes), 'total': len(episodes)}]}       
         for episode in episodes:
             response['getMetadataResult'].append({'mediaMetadata': {
                 'id': 'episodes/' + episode['id'],
