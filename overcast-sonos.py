@@ -28,10 +28,16 @@ mediaCollection = {'id': str,
                    'canScroll': bool,
                    'canSkip': bool}
 
+positionInformation = {'id': str,
+                 'index': int, #always 0, "reserved for future use" by Sonos
+                 'offsetMillis': int}
+
 trackMetadata = {'artist': str,
                  'albumArtist': str,
+                 'albumArtURI': str,
                  'genreId': str,
-                 'duration': int}
+                 'duration': int,
+                 'canResume': bool}
 
 mediaMetadata = {'id': str,
                  'title': str,
@@ -77,19 +83,23 @@ def getMetadata(id, index, count):
         episodes = overcast.get_active_episodes()
         response = {'getMetadataResult': [{'index': 0, 'count': len(episodes), 'total': len(episodes)}]}
         for episode in episodes:
-            response['getMetadataResult'].append({'mediaMetadata': {
-                'id': 'episodes/' + episode['id'],
-                'title': episode['title'],
-                'mimeType': episode['audio_type'],
-                'itemType': 'track',
-                'trackMetadata': {
-                    'artist': episode['podcast_title'],
-                    'albumArtist': episode['podcast_title'],
-                    'genreId': 'podcast',
-                    'duration': episode['duration'],
+            response['getMetadataResult'].append({
+                'mediaMetadata': {
+                    'id': 'episodes/' + episode['id'],
+                    'title': episode['title'],
+                    'mimeType': episode['audio_type'],
+                    'itemType': 'track',
+                    'trackMetadata': {
+                        'artist': episode['podcast_title'],
+                        'albumArtist': episode['podcast_title'],
+                        'albumArtURI': episode['albumArtURI'],
+                        'genreId': 'podcast',
+                        'duration': episode['duration'],
+                        'canResume': True,
+                    }
                 }
-            }})
-    
+            })
+
     elif id == 'podcasts':
         podcasts = overcast.get_all_podcasts()
         response = {'getMetadataResult': [{'index': 0, 'count': len(podcasts), 'total': len(podcasts)}]}
@@ -97,28 +107,33 @@ def getMetadata(id, index, count):
             response['getMetadataResult'].append({'mediaCollection': {
                 'id': 'podcasts/' + podcast['id'],
                 'title': podcast['title'],
+                'albumArtURI': podcast['albumArtURI'],
                 'itemType': 'container',
                 'canPlay': False,
             }})
-    
+
     elif id.startswith('podcasts/'):
         podcast_id = id.split('/', 1)[-1]
         episodes = overcast.get_all_podcast_episodes(podcast_id)
-        response = {'getMetadataResult': [{'index': 0, 'count': len(episodes), 'total': len(episodes)}]}       
+        response = {'getMetadataResult': [{'index': 0, 'count': len(episodes), 'total': len(episodes)}]}
         for episode in episodes:
-            response['getMetadataResult'].append({'mediaMetadata': {
-                'id': 'episodes/' + episode['id'],
-                'title': episode['title'],
-                'mimeType': episode['audio_type'],
-                'itemType': 'track',
-                'trackMetadata': {
-                    'artist': episode['podcast_title'],
-                    'albumArtist': episode['podcast_title'],
-                    'genreId': 'podcast',
-                    'duration': episode['duration'],
+            response['getMetadataResult'].append({
+                'mediaMetadata': {
+                    'id': 'episodes/' + episode['id'],
+                    'title': episode['title'],
+                    'mimeType': episode['audio_type'],
+                    'itemType': 'track',
+                    'trackMetadata': {
+                        'artist': episode['podcast_title'],
+                        'albumArtist': episode['podcast_title'],
+                        'albumArtURI': episode['albumArtURI'],
+                        'genreId': 'podcast',
+                        'duration': episode['duration'],
+                        'canResume': True,
+                    }
                 }
-            }})
-    
+            })
+
     else:
         logging.error('unknown getMetadata id id=%s', id)
         response = {'getMetadataResult': [{'index': 0, 'count': 0, 'total': 0}]}
@@ -138,18 +153,22 @@ def getMediaMetadata(id):
     log.debug('at=getMediaMetadata id=%s', id)
     _, episode_id = id.rsplit('/', 1)
     episode = overcast.get_episode_detail(episode_id)
-    response = {'getMediaMetadataResult': {'mediaMetadata': {
-        'id': id,
-        'title': episode['title'],
-        'mimeType': episode['audio_type'],
-        'itemType': 'track',
-        'trackMetadata': {
-            'artist': episode['podcast_title'],
-            'albumArtist': episode['podcast_title'],
-            'genreId': 'podcast',
-            'duration': episode['duration'],
+    response = {'getMediaMetadataResult': {
+        'mediaMetadata': {
+            'id': id,
+            'title': episode['title'],
+            'mimeType': episode['audio_type'],
+            'itemType': 'track',
+            'trackMetadata': {
+                'artist': episode['podcast_title'],
+                'albumArtist': episode['podcast_title'],
+                'albumArtURI': episode['albumArtURI'],
+                'genreId': 'podcast',
+                'duration': episode['duration'],
+                'canResume': True,
+            }
         }
-    }}}
+    }}
     log.debug('at=getMediaMetadata response=%s', response)
     return response
 
@@ -166,13 +185,19 @@ def getMediaURI(id):
     log.debug('at=getMediaURI id=%s', id)
     _, episode_id = id.rsplit('/', 1)
     episode = overcast.get_episode_detail(episode_id)
-    response = {'getMediaURIResult': episode['audio_uri']}
+    response = {'getMediaURIResult': episode['audio_uri'],
+            'positionInformation': {
+                'id': 'episodes/' + episode['id'],
+                'index': 0,
+                'offsetMillis': episode['offsetMillis']
+            },
+        }
     log.debug('at=getMediaMetadata response=%s', response)
     return response
 
 dispatcher.register_function(
     'getMediaURI', getMediaURI,
-    returns = {'getMediaURIResult': str},
+    returns = {'getMediaURIResult': str, 'positionInformation': positionInformation},
      args = {'id': str}
 )
 
