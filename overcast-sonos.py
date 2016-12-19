@@ -5,11 +5,10 @@ from pysimplesoap.server import SoapDispatcher, SOAPHandler
 from BaseHTTPServer import HTTPServer
 
 logging.basicConfig(level=logging.DEBUG)
-
 log = logging.getLogger('overcast-sonos')
 
 dispatcher = SoapDispatcher('overcast-sonos',
-    location = 'http://localhost:8080/',
+    location = 'http://localhost:8140/',
     namespace = 'http://www.sonos.com/Services/1.1',
     trace = True,
     debug = True
@@ -56,21 +55,21 @@ dispatcher.register_function(
 
 def getMetadata(id, index, count):
     log.debug('at=getMetadata id=%s index=%s count=%s', id, index, count)
-    
-    if id == 'root': 
+
+    if id == 'root':
         response = {'getMetadataResult': [
             {'index': 0, 'count': 2, 'total': 2},
             {'mediaCollection': {
                 'id': 'episodes',
                 'title': 'All Active Episodes',
                 'itemType': 'container',
-                'canPlay': False 
+                'canPlay': False
             }},
             {'mediaCollection': {
                 'id': 'podcasts',
                 'title': 'Podcasts',
                 'itemType': 'container',
-                'canPlay': False 
+                'canPlay': False
             }},
         ]}
 
@@ -133,7 +132,7 @@ dispatcher.register_function(
     args = {'id': str, 'index': int, 'count': int}
 )
 
-### 
+###
 
 def getMediaMetadata(id):
     log.debug('at=getMediaMetadata id=%s', id)
@@ -153,7 +152,7 @@ def getMediaMetadata(id):
     }}}
     log.debug('at=getMediaMetadata response=%s', response)
     return response
-    
+
 dispatcher.register_function(
     'getMediaMetadata', getMediaMetadata,
     returns = {'getMediaMetadataResult': mediaMetadata},
@@ -190,7 +189,7 @@ dispatcher.register_function(
 )
 
 if __name__ == '__main__':
-    log.info('at=start')    
-    httpd = HTTPServer(("", 8080), SOAPHandler)
+    log.info('at=start')
+    httpd = HTTPServer(("", 8140), SOAPHandler)
     httpd.dispatcher = dispatcher
     httpd.serve_forever()

@@ -9,6 +9,7 @@ import lxml.html
 import urlparse
 
 class Overcast(object):
+
     def __init__(self, email, password):
         self.session = requests.session()
         r = self.session.post('https://overcast.fm/login', {'email': email, 'password': password})
@@ -16,10 +17,10 @@ class Overcast(object):
         alert = doc.cssselect('div.alert')
         if alert:
             raise Exception("Can't login: {}".format(alert[0].text_content().strip()))
-            
+
     def _get_html(self, url):
         return lxml.html.fromstring(self.session.get(url).content)
-            
+
     def get_active_episodes(self):
         doc = self._get_html('https://overcast.fm/podcasts')
         return [
@@ -27,7 +28,7 @@ class Overcast(object):
             for cell in doc.cssselect('a.episodecell')
             if 'href' in cell.attrib
         ]
-        
+
     def get_episode_detail(self, episode_id):
         episode_href = urlparse.urljoin('https://overcast.fm', episode_id)
         doc = self._get_html(episode_href)
@@ -47,11 +48,11 @@ class Overcast(object):
             for cell in doc.cssselect('a.feedcell')
             if 'href' in cell.attrib
         ]
-        
+
     def get_all_podcast_episodes(self, podcast_id, limit=10):
         """
         get all episodes (played or not) for a podcast.
-        
+
         needs to be limited to avoid hammering overcast and timing out sonos.
         """
         podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
