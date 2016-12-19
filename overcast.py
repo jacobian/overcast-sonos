@@ -49,6 +49,8 @@ class Overcast(object):
             'podcast_title': doc.cssselect('div.titlestack div.caption2 a')[0].text_content(),
             'offsetMillis': time_elapsed_seconds * 1000,
             'duration': duration,
+            'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
+            'data_sync_version': doc.cssselect('audio#audioplayer')[0].attrib['data-sync-version'],
             'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
             'audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
             'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
@@ -113,3 +115,9 @@ class Overcast(object):
             for cell in doc.cssselect('a.extendedepisodecell')[:limit]
             if 'href' in cell.attrib
         ]
+
+    def update_episode_offset(self, episode, updated_offset_seconds):
+        url = 'https://overcast.fm/podcasts/set_progress/' + episode['data_item_id']
+        params = {'p': updated_offset_seconds, 'speed': 0, 'v': episode['data_sync_version']}
+        r = self.session.post(url, params)
+        log.debug(r)

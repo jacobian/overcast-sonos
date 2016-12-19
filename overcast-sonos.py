@@ -198,7 +198,7 @@ def getMediaURI(id):
 dispatcher.register_function(
     'getMediaURI', getMediaURI,
     returns = {'getMediaURIResult': str, 'positionInformation': positionInformation},
-     args = {'id': str}
+    args = {'id': str}
 )
 
 ###
@@ -210,7 +210,46 @@ def getLastUpdate():
 dispatcher.register_function(
     'getLastUpdate', getLastUpdate,
     returns = {'getLastUpdateResult': {'catalog': str, 'favorites': str, 'pollInterval': int}},
-    args = None
+    args = {}
+)
+
+###
+
+def reportPlaySeconds(id, seconds, offsetMillis, contextId):
+    episode_id = id.rsplit('/', 1)[-1]
+    log.debug('at=reportPlaySeconds and id=%s, seconds=%d, offsetMillis=%d, contextId=%s, episode_id=%s', id, seconds, offsetMillis, contextId, episode_id)
+    episode = overcast.get_episode_detail(episode_id)
+    overcast.update_episode_offset(episode, offsetMillis/1000)
+    return {'reportPlaySecondsResult': {'interval': 30}}
+
+dispatcher.register_function(
+    'reportPlaySeconds', reportPlaySeconds,
+    returns = {'reportPlaySecondsResult': {'interval': int}},
+    args = {'id': str, 'seconds': int, 'offsetMillis': int, 'contextId': str}
+)
+
+def reportPlayStatus(id, status, contextId, offsetMillis):
+    episode_id = id.rsplit('/', 1)[-1]
+    log.debug('at=reportPlayStatus and id=%s, status=%s, contextId=%s, offsetMillis=%d, episode_id=%s', id, status, contextId, offsetMillis, episode_id)
+    episode = overcast.get_episode_detail(episode_id)
+    overcast.update_episode_offset(episode, offsetMillis/1000)
+
+dispatcher.register_function(
+    'reportPlayStatus', reportPlayStatus,
+    returns = {},
+    args = {'id': str, 'status': str, 'offsetMillis': int, 'contextId': str}
+)
+
+def setPlayedSeconds(id, seconds, offsetMillis, contextId):
+    episode_id = id.rsplit('/', 1)[-1]
+    log.debug('at=setPlayedSeconds and id=%s, seconds=%d, offsetMillis=%d, contextId=%s, episode_id=%s', id, seconds, offsetMillis, contextId, episode_id)
+    episode = overcast.get_episode_detail(episode_id)
+    overcast.update_episode_offset(episode, offsetMillis/1000)
+
+dispatcher.register_function(
+    'setPlayedSeconds', setPlayedSeconds,
+    returns = {},
+    args = {'id': str, 'seconds': int, 'offsetMillis': int, 'contextId': str}
 )
 
 if __name__ == '__main__':
