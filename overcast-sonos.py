@@ -1,6 +1,6 @@
 import os
 import logging
-from overcast import Overcast
+from overcast import Overcast, utilities
 from pysimplesoap.server import SoapDispatcher, SOAPHandler
 from BaseHTTPServer import HTTPServer
 
@@ -185,7 +185,9 @@ def getMediaURI(id):
     log.debug('at=getMediaURI id=%s', id)
     _, episode_id = id.rsplit('/', 1)
     episode = overcast.get_episode_detail(episode_id)
-    response = {'getMediaURIResult': episode['audio_uri'],
+    parsed_audio_uri = episode['parsed_audio_uri']
+    audio_uri = utilities.final_redirect_url(parsed_audio_uri)
+    response = {'getMediaURIResult': audio_uri,
             'positionInformation': {
                 'id': 'episodes/' + episode['id'],
                 'index': 0,

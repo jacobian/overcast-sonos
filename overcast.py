@@ -7,10 +7,11 @@ Overcast doesn't really offer an official API, so this just sorta apes it.
 import requests
 import lxml.html
 import urlparse
+import utilities
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('overcast-sonos')
+
 
 class Overcast(object):
 
@@ -52,7 +53,7 @@ class Overcast(object):
             'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
             'data_sync_version': doc.cssselect('audio#audioplayer')[0].attrib['data-sync-version'],
             'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
-            'audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
+            'parsed_audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
             'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
         }
 
@@ -67,29 +68,10 @@ class Overcast(object):
             if episode_id in cell.attrib['href']:
                 cell.cssselect('div.caption2')[0].text_content()
                 unparsed_time_remaining = cell.cssselect('div.singleline')[1].text_content()
-                time_remaining_seconds = self.duration_in_seconds(unparsed_time_remaining)
+                time_remaining_seconds = utilities.duration_in_seconds(unparsed_time_remaining)
                 break
 
         return time_remaining_seconds
-
-    def duration_in_seconds(self, str):
-        seconds = 0
-        try:
-            strings = str.split(' ')
-            for string in strings:
-                if ":" in string:
-                    list = string.split(":")
-                    list.reverse()
-                    for i,x in enumerate(list):
-                        seconds += int(x) * (60**i)
-                    break
-        except:
-            log.debug('''Couldn't parse the episode's duration in seconds from the string %s.''', str)
-            pass
-
-        log.debug('''Parsed the episode's duration in seconds from the string %s -> %d''', str, seconds)
-
-        return seconds
 
     def get_all_podcasts(self):
         doc = self._get_html('https://overcast.fm/podcasts')
@@ -119,5 +101,5 @@ class Overcast(object):
     def update_episode_offset(self, episode, updated_offset_seconds):
         url = 'https://overcast.fm/podcasts/set_progress/' + episode['data_item_id']
         params = {'p': updated_offset_seconds, 'speed': 0, 'v': episode['data_sync_version']}
-        r = self.session.post(url, params)
-        log.debug(r)
+        log.debug('Updating offset of episode with id %s to %d', episode['id'], updated_offset_seconds)
+        self.session.post(url, params)
