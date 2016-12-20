@@ -7,6 +7,10 @@
 - properly implement getLastUpdate
     - by faking this, sonos seems to cache info forever. that's not good.
 - refactor getMetadata not to be repetetive and ugly
+- load episode lists faster and only call get_episode_detail if absolutely needed
+    - refactor the way episode_id is used (sometimes with a slash, sometimes without)
+- add a picture to the actual Overcast Sonos service
+- "delete" or remove an episode once it has finished playing (currently it just shows as 00:00 remaining and must be manually finished on some other way)
 
 Maybe:
 
