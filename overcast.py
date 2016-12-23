@@ -42,7 +42,7 @@ class Overcast(object):
         time_remaining_seconds = self.get_episode_time_remaining_seconds(episode_id, doc)
         duration = time_elapsed_seconds + time_remaining_seconds
         if time_elapsed_seconds == duration:
-            duration = 0
+            duration = -1
 
         return {
             'id': episode_href.lstrip('/'),
@@ -55,6 +55,7 @@ class Overcast(object):
             'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
             'parsed_audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
             'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
+            'delete_episode_uri': doc.cssselect('a#delete_episode_button')[0].attrib['href']
         }
 
     def get_episode_time_remaining_seconds(self, episode_id, episode_html):
@@ -62,7 +63,7 @@ class Overcast(object):
         podcast_id = episode_html.cssselect('div.titlestack div.caption2 a')[0].attrib['href']
         podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
-        time_remaining_seconds = 0
+        time_remaining_seconds = -1
 
         for cell in doc.cssselect('a.extendedepisodecell'):
             if episode_id in cell.attrib['href']:
@@ -99,7 +100,15 @@ class Overcast(object):
         ]
 
     def update_episode_offset(self, episode, updated_offset_seconds):
+        log.debug("updated_offset_seconds = %d and duration = %d", updated_offset_seconds, episode['duration'])
         url = 'https://overcast.fm/podcasts/set_progress/' + episode['data_item_id']
         params = {'p': updated_offset_seconds, 'speed': 0, 'v': episode['data_sync_version']}
         log.debug('Updating offset of episode with id %s to %d', episode['id'], updated_offset_seconds)
         self.session.post(url, params)
+        if updated_offset_seconds >= episode['duration']:
+            self.delete_episode(episode)
+
+    def delete_episode(self, episode):
+        url = 'https://overcast.fm' + episode['delete_episode_uri']
+        log.debug('Deleting episode with id %s', episode['id'])
+        self.session.post(url)

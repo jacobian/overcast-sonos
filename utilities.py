@@ -11,7 +11,7 @@ log = logging.getLogger('overcast-sonos')
 
 
 def duration_in_seconds(str):
-    seconds = 0
+    seconds = -1
     try:
         strings = str.split(' ')
         for string in strings:
