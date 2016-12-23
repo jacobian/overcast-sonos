@@ -1,5 +1,6 @@
 import os
 import logging
+import uuid
 from overcast import Overcast, utilities
 from pysimplesoap.server import SoapDispatcher, SOAPHandler
 from BaseHTTPServer import HTTPServer
@@ -207,11 +208,11 @@ dispatcher.register_function(
 
 def getLastUpdate():
     log.debug('at=getLastUpdate')
-    return {'getLastUpdateResult': {'catalog': '0', 'favorites': '0', 'pollInterval': 60}}
+    return {'getLastUpdateResult': {'catalog': str(uuid.uuid4()), 'favorites': '0', 'pollInterval': 60}}
 
 dispatcher.register_function(
     'getLastUpdate', getLastUpdate,
-    returns = {'getLastUpdateResult': {'catalog': str, 'favorites': str, 'pollInterval': int}},
+    returns = {'getLastUpdateResult': {'autoRefreshEnabled': bool, 'catalog': str, 'favorites': str, 'pollInterval': int}},
     args = {}
 )
 
