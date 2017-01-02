@@ -101,7 +101,6 @@ def getMetadata(id, index, count):
                         'albumArtist': episode['podcast_title'],
                         'albumArtURI': episode['albumArtURI'],
                         'genreId': 'podcast',
-                        'duration': episode['duration'],
                         'canResume': True,
                     }
                 }
@@ -137,7 +136,6 @@ def getMetadata(id, index, count):
                         'albumArtist': episode['podcast_title'],
                         'albumArtURI': episode['albumArtURI'],
                         'genreId': 'podcast',
-                        'duration': episode['duration'],
                         'canResume': True,
                     }
                 }
