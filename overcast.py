@@ -77,9 +77,10 @@ class Overcast(object):
     def get_all_podcasts(self):
         doc = self._get_html('https://overcast.fm/podcasts')
         return [
-            {'id': cell.attrib['href'].lstrip('/'),
-            'title': cell.cssselect('div.title')[0].text_content(),
-            'albumArtURI': cell.cssselect('img')[0].attrib['src'],
+            {
+                'id': cell.attrib['href'].lstrip('/'),
+                'title': cell.cssselect('div.title')[0].text_content(),
+                'albumArtURI': cell.cssselect('img')[0].attrib['src'],
             }
             for cell in doc.cssselect('a.feedcell')
             if 'href' in cell.attrib
