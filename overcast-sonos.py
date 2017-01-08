@@ -8,6 +8,32 @@ from BaseHTTPServer import HTTPServer
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('overcast-sonos')
 
+list_active_episodes_in_root = True
+allow_all_active_episodes_as_playlist = True
+
+
+class customSOAPHandler(SOAPHandler):
+
+    def do_GET(self):
+        log.debug('PATH ==> %s', self.path)
+        if self.path == '/presentation_map':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/xml')
+            self.end_headers()
+            self.wfile.write('''<?xml version="1.0" encoding="UTF-8"?>
+            <Presentation>
+                <PresentationMap type="DisplayType">
+                    <RootNodeDisplayType>
+                        <DisplayMode>LIST</DisplayMode>
+                    </RootNodeDisplayType>
+                </PresentationMap>
+            </Presentation>
+            ''')
+            return
+        else:
+            return SOAPHandler.do_GET(self)
+
+
 dispatcher = SoapDispatcher('overcast-sonos',
                             location='http://localhost:8140/',
                             namespace='http://www.sonos.com/Services/1.1',
@@ -63,30 +89,51 @@ dispatcher.register_function(
 ###
 
 
-def getMetadata(id, index, count):
-    log.debug('at=getMetadata id=%s index=%s count=%s', id, index, count)
+def getMetadata(id, index, count, recursive=False):
+    log.debug('at=getMetadata id=%s index=%s count=%s recursive=%s', id, index, count, recursive)
 
     if id == 'root':
-        response = {'getMetadataResult': [
-            {'index': 0, 'count': 2, 'total': 2},
-            {'mediaCollection': {
-                'id': 'episodes',
-                'title': 'All Active Episodes',
-                'itemType': 'container',
-                'canPlay': False,
-                'albumArtURI': 'http://is2.mzstatic.com/image/thumb/Purple62/v4/22/c7/93/22c793a7-55a8-e72b-756c-90641e7b96d4/source/175x175bb.jpg',
-            }},
+        response = {'getMetadataResult': []}
+        response['getMetadataResult'].append(
             {'mediaCollection': {
                 'id': 'podcasts',
                 'title': 'Podcasts',
-                'itemType': 'container',
+                'itemType': 'albumList',
                 'canPlay': False,
                 'albumArtURI': 'http://is2.mzstatic.com/image/thumb/Purple62/v4/22/c7/93/22c793a7-55a8-e72b-756c-90641e7b96d4/source/175x175bb.jpg',
-            }},
-        ]}
+            }})
+        response['getMetadataResult'].append(
+                {'mediaCollection': {
+                    'id': 'episodes',
+                    'title': 'All Active Episodes',
+                    'itemType': 'playlist',
+                    'canPlay': allow_all_active_episodes_as_playlist,
+                    'albumArtURI': 'http://is2.mzstatic.com/image/thumb/Purple62/v4/22/c7/93/22c793a7-55a8-e72b-756c-90641e7b96d4/source/175x175bb.jpg',
+                }})
+        if list_active_episodes_in_root:
+            all_episodes = overcast.get_active_episodes()
+            episodes = all_episodes[index:index+count]
+            response['getMetadataResult'].append({'index': index, 'count': len(episodes) + 2, 'total': len(all_episodes) + 2})
+            for episode in episodes:
+                response['getMetadataResult'].append({
+                    'mediaMetadata': {
+                        'id': 'episodes/' + episode['id'],
+                        'title': episode['podcast_title'] + " - " + episode['title'],
+                        'mimeType': episode['audio_type'],
+                        'itemType': 'track',
+                        'trackMetadata': {
+                            'artist': episode['podcast_title'],
+                            'album': episode['podcast_title'],
+                            'albumArtist': episode['podcast_title'],
+                            'albumArtURI': episode['albumArtURI'],
+                            'genreId': 'podcast',
+                            'canResume': True,
+                        }
+                    }
+                })
 
     elif id == 'episodes':
-        all_episodes = overcast.get_active_episodes()
+        all_episodes = overcast.get_active_episodes(get_details=recursive)
         episodes = all_episodes[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(episodes), 'total': len(all_episodes)}]}
         for episode in episodes:
@@ -101,6 +148,7 @@ def getMetadata(id, index, count):
                         'albumArtist': episode['podcast_title'],
                         'albumArtURI': episode['albumArtURI'],
                         'genreId': 'podcast',
+                        'duration': episode['duration'],
                         'canResume': True,
                     }
                 }
@@ -115,7 +163,7 @@ def getMetadata(id, index, count):
                 'id': 'podcasts/' + podcast['id'],
                 'title': podcast['title'],
                 'albumArtURI': podcast['albumArtURI'],
-                'itemType': 'container',
+                'itemType': 'album',
                 'canPlay': False,
             }})
 
@@ -152,7 +200,7 @@ def getMetadata(id, index, count):
 dispatcher.register_function(
     'getMetadata', getMetadata,
     returns={'getMetadataResult': {'index': int, 'count': int, 'total': int, 'mediaCollection': mediaCollection}},
-    args={'id': str, 'index': int, 'count': int}
+    args={'id': str, 'index': int, 'count': int, 'recursive': bool}
 )
 
 ###
@@ -161,6 +209,7 @@ dispatcher.register_function(
 def getMediaMetadata(id):
     log.debug('at=getMediaMetadata id=%s', id)
     _, episode_id = id.rsplit('/', 1)
+    log.debug('at=getMediaMetadata episode_id=%s', episode_id)
     episode = overcast.get_episode_detail(episode_id)
     response = {'getMediaMetadataResult': {
         'mediaMetadata': {
@@ -204,7 +253,7 @@ def getMediaURI(id):
                         'offsetMillis': episode['offsetMillis']
                     },
                 }
-    log.debug('at=getMediaMetadata response=%s', response)
+    log.debug('at=getMediaURI response=%s', response)
     return response
 
 
@@ -246,7 +295,7 @@ dispatcher.register_function(
 )
 
 
-def reportPlayStatus(id, status, contextId, offsetMillis):
+def reportPlayStatus(id, status, offsetMillis, contextId):
     episode_id = id.rsplit('/', 1)[-1]
     log.debug('at=reportPlayStatus and id=%s, status=%s, contextId=%s, offsetMillis=%d, episode_id=%s', id, status, contextId, offsetMillis, episode_id)
     episode = overcast.get_episode_detail(episode_id)
@@ -273,8 +322,9 @@ dispatcher.register_function(
     args={'id': str, 'seconds': int, 'offsetMillis': int, 'contextId': str}
 )
 
+
 if __name__ == '__main__':
     log.info('at=start')
-    httpd = HTTPServer(("", 8140), SOAPHandler)
+    httpd = HTTPServer(("", 8140), customSOAPHandler)
     httpd.dispatcher = dispatcher
     httpd.serve_forever()

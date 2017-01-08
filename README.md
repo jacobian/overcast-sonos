@@ -1,6 +1,6 @@
 # Play [Overcast](https://overcast.fm/) podcasts on your Sonos.
 
-* Fast! 
+* Fast!
 * Remembers last played position
 * Syncs play position back to the Overcast service every 30 seconds or when paused/stopped
 * Removes episodes from Overcast when completed
@@ -16,9 +16,10 @@ Usage:
     - SID - some unique SID (255 works if you've not done this before
     - Service Name - some name, `overcast` works
     - Endpoint URL and Secure Endpoint URL: `http://<YOUR_IP>:8140/overcast-sonos`
+    - Presentation map: version = 1, Uri = `http://<YOUR_IP>:8140/presentation_map`
     - Authentication SOAP header policy: "Anonymous"
-    - Check the boxes in the example picture
+    - Check the boxes in the [example screenshot](./customsd_example.png)
 
  1. In your Sonos controller, go to "Add Music Service", then add the service above.
 
- See the [TODO list](./TODO.md) for some nice-to-haves .
+ See the [TODO list](./TODO.md) for some nice-to-haves.
