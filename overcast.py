@@ -29,7 +29,15 @@ class Overcast(object):
     def get_active_episodes(self):
         doc = self._get_html('https://overcast.fm/podcasts')
         return [
-            self.get_episode_detail(cell.attrib['href'])
+            # NOTE: If the hardcoded audio_type causes any problems, just uncomment the line below and comment out the dictionary below it.
+            # self.get_episode_detail(cell.attrib['href'])
+            {
+                'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
+                'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
+                'audio_type': 'audio/mpeg',
+                'podcast_title': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
+                'albumArtURI': cell.cssselect('img')[0].attrib['src'],
+            }
             for cell in doc.cssselect('a.episodecell')
             if 'href' in cell.attrib
         ]
@@ -77,25 +85,34 @@ class Overcast(object):
     def get_all_podcasts(self):
         doc = self._get_html('https://overcast.fm/podcasts')
         return [
-            {'id': cell.attrib['href'].lstrip('/'),
-            'title': cell.cssselect('div.title')[0].text_content(),
-            'albumArtURI': cell.cssselect('img')[0].attrib['src'],
+            {
+                'id': cell.attrib['href'].lstrip('/'),
+                'title': cell.cssselect('div.title')[0].text_content(),
+                'albumArtURI': cell.cssselect('img')[0].attrib['src'],
             }
             for cell in doc.cssselect('a.feedcell')
             if 'href' in cell.attrib
         ]
 
-    def get_all_podcast_episodes(self, podcast_id, limit=10):
+    def get_all_podcast_episodes(self, podcast_id):
         """
         get all episodes (played or not) for a podcast.
-
-        needs to be limited to avoid hammering overcast and timing out sonos.
         """
         podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
+        albumArtURI = doc.cssselect('img.art')[0].attrib['src']
+        podcast_title = doc.cssselect('h2.centertext')[0].text_content()
         return [
-            self.get_episode_detail(cell.attrib['href'])
-            for cell in doc.cssselect('a.extendedepisodecell')[:limit]
+            # NOTE: If the hardcoded audio_type causes any problems, just uncomment the line below and comment out the dictionary below it.
+            # self.get_episode_detail(cell.attrib['href'])
+            {
+                'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
+                'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
+                'audio_type': 'audio/mpeg',
+                'podcast_title': podcast_title,
+                'albumArtURI': albumArtURI,
+            }
+            for cell in doc.cssselect('a.extendedepisodecell')
             if 'href' in cell.attrib
         ]
 

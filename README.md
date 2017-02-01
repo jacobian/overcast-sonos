@@ -1,6 +1,9 @@
 # Play [Overcast](https://overcast.fm/) podcasts on your Sonos.
 
-**Super-early, rather fragile, barely works.**
+* Fast! 
+* Remembers last played position
+* Syncs play position back to the Overcast service every 30 seconds or when paused/stopped
+* Removes episodes from Overcast when completed
 
 Usage:
 
@@ -18,4 +21,4 @@ Usage:
 
  1. In your Sonos controller, go to "Add Music Service", then add the service above.
 
- See the [TODO list](./TODO.md) for a list of stuff that doesn't work -- i.e., most of it.
+ See the [TODO list](./TODO.md) for some nice-to-haves .
