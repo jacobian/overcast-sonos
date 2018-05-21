@@ -100,7 +100,7 @@ def getMetadata(id, index, count, recursive=False):
                 'title': 'Podcasts',
                 'itemType': 'albumList',
                 'canPlay': False,
-                'albumArtURI': 'http://is2.mzstatic.com/image/thumb/Purple62/v4/22/c7/93/22c793a7-55a8-e72b-756c-90641e7b96d4/source/175x175bb.jpg',
+                'albumArtURI': 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg',
             }})
         response['getMetadataResult'].append(
                 {'mediaCollection': {
@@ -108,7 +108,7 @@ def getMetadata(id, index, count, recursive=False):
                     'title': 'All Active Episodes',
                     'itemType': 'playlist',
                     'canPlay': allow_all_active_episodes_as_playlist,
-                    'albumArtURI': 'http://is2.mzstatic.com/image/thumb/Purple62/v4/22/c7/93/22c793a7-55a8-e72b-756c-90641e7b96d4/source/175x175bb.jpg',
+                    'albumArtURI': 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg',
                 }})
         if list_active_episodes_in_root:
             all_episodes = overcast.get_active_episodes()
