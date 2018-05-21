@@ -133,7 +133,7 @@ def getMetadata(id, index, count, recursive=False):
                 })
 
     elif id == 'episodes':
-        all_episodes = overcast.get_active_episodes(get_details=recursive)
+        all_episodes = overcast.get_active_episodes(get_details=True)
         episodes = all_episodes[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(episodes), 'total': len(all_episodes)}]}
         for episode in episodes:
