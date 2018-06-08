@@ -26,21 +26,23 @@ class Overcast(object):
     def _get_html(self, url):
         return lxml.html.fromstring(self.session.get(url).content)
 
-    def get_active_episodes(self):
+    def get_active_episodes(self, get_details=False):
+        active_episodes = []
         doc = self._get_html('https://overcast.fm/podcasts')
-        return [
-            # NOTE: If the hardcoded audio_type causes any problems, just uncomment the line below and comment out the dictionary below it.
-            # self.get_episode_detail(cell.attrib['href'])
-            {
-                'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
-                'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
-                'audio_type': 'audio/mpeg',
-                'podcast_title': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
-                'albumArtURI': cell.cssselect('img')[0].attrib['src'],
-            }
-            for cell in doc.cssselect('a.episodecell')
-            if 'href' in cell.attrib
-        ]
+        for cell in doc.cssselect('a.episodecell'):
+            if 'href' in cell.attrib:
+                if get_details:
+                    active_episodes.append(self.get_episode_detail(cell.attrib['href']))
+                else:
+                    active_episodes.append({
+                        'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
+                        'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
+                        'audio_type': 'audio/mpeg',
+                        'podcast_title': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
+                        'albumArtURI': cell.cssselect('img')[0].attrib['src'],
+                        'duration': -1,
+                    })
+        return active_episodes
 
     def get_episode_detail(self, episode_id):
         episode_href = urlparse.urljoin('https://overcast.fm', episode_id)
