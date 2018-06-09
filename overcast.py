@@ -9,6 +9,7 @@ import lxml.html
 import urlparse
 import utilities
 import logging
+import threading
 
 log = logging.getLogger('overcast-sonos')
 
@@ -28,11 +29,16 @@ class Overcast(object):
 
     def get_active_episodes(self, get_details=False):
         active_episodes = []
+        active_episodes_dictionary = {}
         doc = self._get_html('https://overcast.fm/podcasts')
-        for cell in doc.cssselect('a.episodecell'):
+        for index, cell in enumerate(doc.cssselect('a.episodecell')):
             if 'href' in cell.attrib:
                 if get_details:
-                    active_episodes.append(self.get_episode_detail(cell.attrib['href']))
+                    episode_id = cell.attrib['href']
+                    time_remaining_seconds = self.get_episode_time_remaining_seconds_from_episode_cell(cell, False)
+                    t = threading.Thread(target=self.add_episode_detail_to, args=(active_episodes_dictionary, index, episode_id, time_remaining_seconds))
+                    t.setDaemon(True)
+                    t.start()
                 else:
                     active_episodes.append({
                         'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
@@ -42,14 +48,27 @@ class Overcast(object):
                         'albumArtURI': cell.cssselect('img')[0].attrib['src'],
                         'duration': -1,
                     })
+    
+        main_thread = threading.currentThread()
+        for t in threading.enumerate():
+            if t is not main_thread:
+                log.debug('''Joining on thread %s''', t.getName())
+                t.join()
+
+        if not active_episodes:
+            active_episodes = [active_episodes_dictionary[key] for key in sorted(active_episodes_dictionary)]
+
         return active_episodes
 
-    def get_episode_detail(self, episode_id):
+    def add_episode_detail_to(self, ordered_episodes, key, episode_id, time_remaining_seconds=None):
+        ordered_episodes[key] = self.get_episode_detail(episode_id, time_remaining_seconds)
+
+    def get_episode_detail(self, episode_id, time_remaining_seconds=None):
         episode_href = urlparse.urljoin('https://overcast.fm', episode_id)
         doc = self._get_html(episode_href)
 
         time_elapsed_seconds = int(doc.cssselect('audio#audioplayer')[0].attrib['data-start-time'])
-        time_remaining_seconds = self.get_episode_time_remaining_seconds(episode_id, doc)
+        time_remaining_seconds = time_remaining_seconds or self.get_episode_time_remaining_seconds(episode_id, doc)
         duration = time_elapsed_seconds + time_remaining_seconds
         if time_elapsed_seconds == duration:
             duration = -1
@@ -73,15 +92,15 @@ class Overcast(object):
         podcast_id = episode_html.cssselect('div.titlestack div.caption2 a')[0].attrib['href']
         podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
-        time_remaining_seconds = -1
 
         for cell in doc.cssselect('a.extendedepisodecell'):
             if episode_id in cell.attrib['href']:
-                cell.cssselect('div.caption2')[0].text_content()
-                unparsed_time_remaining = cell.cssselect('div.singleline')[1].text_content()
-                time_remaining_seconds = utilities.duration_in_seconds(unparsed_time_remaining)
-                break
+                return self.get_episode_time_remaining_seconds_from_episode_cell(cell, True)
 
+    def get_episode_time_remaining_seconds_from_episode_cell(self, cell, is_extended_cell):
+        unparsed_time_remaining_index = 1 if is_extended_cell else 2
+        unparsed_time_remaining = cell.cssselect('div.singleline')[unparsed_time_remaining_index].text_content()
+        time_remaining_seconds = utilities.duration_in_seconds(unparsed_time_remaining)
         return time_remaining_seconds
 
     def get_all_podcasts(self):
