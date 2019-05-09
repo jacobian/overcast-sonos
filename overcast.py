@@ -75,8 +75,8 @@ class Overcast(object):
 
         return {
             'id': episode_href.lstrip('/'),
-            'title': doc.cssselect('div.titlestack div.title')[0].text_content(),
-            'podcast_title': doc.cssselect('div.titlestack div.caption2 a')[0].text_content(),
+            'title': doc.cssselect('div.centertext h2')[0].text_content(),
+            'podcast_title': doc.cssselect('div.centertext h3 a')[0].text_content(),
             'offsetMillis': time_elapsed_seconds * 1000,
             'duration': duration,
             'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
@@ -89,7 +89,7 @@ class Overcast(object):
 
     def get_episode_time_remaining_seconds(self, episode_id, episode_html):
         log.debug('''getting the remaining time. episode id is %s''', episode_id)
-        podcast_id = episode_html.cssselect('div.titlestack div.caption2 a')[0].attrib['href']
+        podcast_id = episode_html.cssselect('div.centertext h3 a')[0].attrib['href']
         podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
 
