@@ -3,7 +3,7 @@ import logging
 import uuid
 from overcast import Overcast, utilities
 from pysimplesoap.server import SoapDispatcher, SOAPHandler
-from BaseHTTPServer import HTTPServer
+from http.server import HTTPServer
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('overcast-sonos')

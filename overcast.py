@@ -6,7 +6,7 @@ Overcast doesn't really offer an official API, so this just sorta apes it.
 
 import requests
 import lxml.html
-import urlparse
+import urllib.parse
 import utilities
 import logging
 import threading
@@ -41,7 +41,7 @@ class Overcast(object):
                     t.start()
                 else:
                     active_episodes.append({
-                        'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
+                        'id': urllib.parse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
                         'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
                         'audio_type': 'audio/mpeg',
                         'podcast_title': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
@@ -64,7 +64,7 @@ class Overcast(object):
         ordered_episodes[key] = self.get_episode_detail(episode_id, time_remaining_seconds)
 
     def get_episode_detail(self, episode_id, time_remaining_seconds=None):
-        episode_href = urlparse.urljoin('https://overcast.fm', episode_id)
+        episode_href = urllib.parse.urljoin('https://overcast.fm', episode_id)
         doc = self._get_html(episode_href)
 
         time_elapsed_seconds = int(doc.cssselect('audio#audioplayer')[0].attrib['data-start-time'])
@@ -90,7 +90,7 @@ class Overcast(object):
     def get_episode_time_remaining_seconds(self, episode_id, episode_html):
         log.debug('''getting the remaining time. episode id is %s''', episode_id)
         podcast_id = episode_html.cssselect('div.centertext h3 a')[0].attrib['href']
-        podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
+        podcast_href = urllib.parse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
 
         for cell in doc.cssselect('a.extendedepisodecell'):
@@ -119,7 +119,7 @@ class Overcast(object):
         """
         get all episodes (played or not) for a podcast.
         """
-        podcast_href = urlparse.urljoin('https://overcast.fm', podcast_id)
+        podcast_href = urllib.parse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
         albumArtURI = doc.cssselect('img.art')[0].attrib['src']
         podcast_title = doc.cssselect('h2.centertext')[0].text_content()
@@ -127,7 +127,7 @@ class Overcast(object):
             # NOTE: If the hardcoded audio_type causes any problems, just uncomment the line below and comment out the dictionary below it.
             # self.get_episode_detail(cell.attrib['href'])
             {
-                'id': urlparse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
+                'id': urllib.parse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
                 'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
                 'audio_type': 'audio/mpeg',
                 'podcast_title': podcast_title,
