@@ -132,6 +132,7 @@ def getMetadata(id, index, count, recursive=False):
                     }
                 })
 
+# This is the display of all episodes when 'All Active Episodes' is selected
     elif id == 'episodes':
         all_episodes = overcast.get_active_episodes(get_details=True)
         episodes = all_episodes[index:index+count]
@@ -154,6 +155,7 @@ def getMetadata(id, index, count, recursive=False):
                 }
             })
 
+# This is the display of all podcasts when 'Podcasts' is selected from the root menu
     elif id == 'podcasts':
         all_podcasts = overcast.get_all_podcasts()
         podcasts = all_podcasts[index:index+count]
@@ -167,6 +169,7 @@ def getMetadata(id, index, count, recursive=False):
                 'canPlay': False,
             }})
 
+# This is the display of a single podcast episode when it is selected from the 'Podcasts' section
     elif id.startswith('podcasts/'):
         podcast_id = id.split('/', 1)[-1]
         all_episodes = overcast.get_all_podcast_episodes(podcast_id)
