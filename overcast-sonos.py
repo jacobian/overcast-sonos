@@ -28,7 +28,7 @@ class customSOAPHandler(SOAPHandler):
                     </RootNodeDisplayType>
                 </PresentationMap>
             </Presentation>
-            ''')
+            '''.encode("utf-8"))
             return
         else:
             return SOAPHandler.do_GET(self)
@@ -105,7 +105,7 @@ def getMetadata(id, index, count, recursive=False):
         response['getMetadataResult'].append(
                 {'mediaCollection': {
                     'id': 'episodes',
-                    'title': 'All Active Episodes',
+                    'title': 'All Active Episodes (Not Working)',
                     'itemType': 'playlist',
                     'canPlay': allow_all_active_episodes_as_playlist,
                     'albumArtURI': 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg',
