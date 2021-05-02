@@ -143,7 +143,9 @@ class Overcast(object):
         params = {'p': updated_offset_seconds, 'speed': 0, 'v': episode['data_sync_version']}
         log.debug('Updating offset of episode with id %s to %d', episode['id'], updated_offset_seconds)
         self.session.post(url, params)
-        if updated_offset_seconds >= episode['duration']:
+        # Remove episode if less than 60 seconds remaining - due to Overcast not giving us accurate episode lengths we have to do this
+        # or we end up with finished episodes still showing in the list
+        if updated_offset_seconds >= (episode['duration'] - 60):
             self.delete_episode(episode)
 
     def delete_episode(self, episode):
