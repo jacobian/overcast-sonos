@@ -21,7 +21,7 @@ Usage:
 
 1. Go to `http://<SONOS_IP>:1400/customsd.htm`, and enter:
 
-    - SID - some unique SID (255 works if you've not done this before
+    - SID - some unique SID (255 works if you've not done this before)
     - Service Name - some name, `overcast` works
     - Endpoint URL and Secure Endpoint URL: `http://<YOUR_IP>:8140/overcast-sonos`
     - Presentation map: version = 1, Uri = `http://<YOUR_IP>:8140/presentation_map`

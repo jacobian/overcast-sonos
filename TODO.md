@@ -4,6 +4,7 @@
     - http://musicpartners.sonos.com/node/82
     - looks like I'll have to hack the soap dispatcher to somehow save headers :(
 - add a picture to the actual Overcast Sonos service
+- Overcast pages include opengraph tags - might be able to parse these for more information like episode summaries
 
 Maybe:
 
