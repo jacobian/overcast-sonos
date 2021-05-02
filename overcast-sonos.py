@@ -97,7 +97,7 @@ def getMetadata(id, index, count, recursive=False):
         response['getMetadataResult'].append(
             {'mediaCollection': {
                 'id': 'podcasts',
-                'title': 'Podcasts',
+                'title': 'Subscribed Podcasts',
                 'itemType': 'albumList',
                 'canPlay': False,
                 'albumArtURI': 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg',
@@ -105,7 +105,7 @@ def getMetadata(id, index, count, recursive=False):
         response['getMetadataResult'].append(
                 {'mediaCollection': {
                     'id': 'episodes',
-                    'title': 'All Active Episodes (Not Working)',
+                    'title': 'All Active Episodes',
                     'itemType': 'playlist',
                     'canPlay': allow_all_active_episodes_as_playlist,
                     'albumArtURI': 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg',
@@ -134,7 +134,9 @@ def getMetadata(id, index, count, recursive=False):
 
 # This is the display of all episodes when 'All Active Episodes' is selected
     elif id == 'episodes':
-        all_episodes = overcast.get_active_episodes(get_details=True)
+        #Temporary fix
+        #all_episodes = overcast.get_active_episodes(get_details=True)
+        all_episodes = overcast.get_active_episodes(get_details=False)
         episodes = all_episodes[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(episodes), 'total': len(all_episodes)}]}
         for episode in episodes:
