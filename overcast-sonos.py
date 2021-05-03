@@ -93,9 +93,11 @@ dispatcher.register_function(
 ###
 
 
+# Gets metadata for podcasts and episodes, depending on which id is sent from Sonos
 def getMetadata(id, index, count, recursive=False):
     log.debug('at=getMetadata id=%s index=%s count=%s recursive=%s', id, index, count, recursive)
 
+# This is the main menu
     if id == 'root':
         response = {'getMetadataResult': []}
         response['getMetadataResult'].append(
@@ -220,7 +222,7 @@ dispatcher.register_function(
 
 ###
 
-
+# Get the medtadata for a single item/episode
 def getMediaMetadata(id):
     log.debug('at=getMediaMetadata id=%s', id)
     _, episode_id = id.rsplit('/', 1)
@@ -255,6 +257,7 @@ dispatcher.register_function(
 ###
 
 
+# Get the URI for an episode
 def getMediaURI(id):
     log.debug('at=getMediaURI id=%s', id)
     _, episode_id = id.rsplit('/', 1)

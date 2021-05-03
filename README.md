@@ -24,7 +24,7 @@ Usage:
     - SID - some unique SID (255 works if you've not done this before)
     - Service Name - some name, `overcast` works
     - Endpoint URL and Secure Endpoint URL: `http://<YOUR_IP>:8140/overcast-sonos`
-    - Presentation map: version = 1, Uri = `http://<YOUR_IP>:8140/presentation_map`
+    - Presentation map: version = 1 (See below), Uri = `http://<YOUR_IP>:8140/presentation_map`
     - Tick the following:
         - Authentication SOAP header policy: "Anonymous"
         - Container Type: "Music Service"
@@ -36,5 +36,7 @@ Usage:
     - Here is an [example screenshot](./customsd_example.png) of how your service should look when you submit it
 
 1. In your Sonos controller, go to "Add Music Service", then add the service above.
+
+*If you're reinstalling the app then increment the presentation map version, otherwise the previous one will be used. You also need to do this if an update is released with an updated presentation map!*
 
  See the [TODO list](./TODO.md) for some nice-to-haves.
