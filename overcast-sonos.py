@@ -27,8 +27,12 @@ class customSOAPHandler(SOAPHandler):
                         <DisplayMode>LIST</DisplayMode>
                     </RootNodeDisplayType>
                 </PresentationMap>
+                <PresentationMap type="QuickSkips">
+                    <QuickSkip type="episode.podcast" forwardSeconds="45" backwardSeconds="10"/>
+                </PresentationMap>
             </Presentation>
             '''.encode("utf-8"))
+            log.info('presentation_map has been sent')
             return
         else:
             return SOAPHandler.do_GET(self)
@@ -121,6 +125,7 @@ def getMetadata(id, index, count, recursive=False):
                         'title': episode['podcast_title'] + " - " + episode['title'],
                         'mimeType': episode['audio_type'],
                         'itemType': 'track',
+                        'semanticType': 'episode.podcast',
                         'trackMetadata': {
                             'artist': episode['podcast_title'],
                             'album': episode['podcast_title'],
@@ -146,6 +151,7 @@ def getMetadata(id, index, count, recursive=False):
                     'title': episode['title'],
                     'mimeType': episode['audio_type'],
                     'itemType': 'track',
+                    'semanticType': 'episode.podcast',
                     'trackMetadata': {
                         'artist': episode['podcast_title'],
                         'albumArtist': episode['podcast_title'],
@@ -168,10 +174,11 @@ def getMetadata(id, index, count, recursive=False):
                 'title': podcast['title'],
                 'albumArtURI': podcast['albumArtURI'],
                 'itemType': 'album',
+                'semanticType': 'podcast',
                 'canPlay': False,
             }})
 
-# This is the display of a single podcast episode when it is selected from the 'Podcasts' section
+# This is the display of a single podcasts recent episodes when it is selected from the 'Podcasts' section
     elif id.startswith('podcasts/'):
         podcast_id = id.split('/', 1)[-1]
         all_episodes = overcast.get_all_podcast_episodes(podcast_id)
@@ -184,6 +191,9 @@ def getMetadata(id, index, count, recursive=False):
                     'title': episode['title'],
                     'mimeType': episode['audio_type'],
                     'itemType': 'track',
+                    'semanticType': 'episode.podcast',
+                    'summary': episode['summary'],
+                    'releasedate': episode['releasedate'],
                     'trackMetadata': {
                         'artist': episode['podcast_title'],
                         'albumArtist': episode['podcast_title'],

@@ -132,6 +132,8 @@ class Overcast(object):
                 'audio_type': 'audio/mpeg',
                 'podcast_title': podcast_title,
                 'albumArtURI': albumArtURI,
+                'summary': cell.cssselect('div.titlestack div.lighttext')[0].text_content(),
+                'releasedate' : utilities.convert_release_date(cell.cssselect('div.titlestack div.caption2')[0].text_content())
             }
             for cell in doc.cssselect('a.extendedepisodecell')
             if 'href' in cell.attrib
