@@ -2,7 +2,7 @@
 
 - tests yay
 - refactor to be a WSGI app
-	- convert to username/password auth
+- convert to username/password auth
 	- http://musicpartners.sonos.com/node/82
 	- looks like I'll have to hack the soap dispatcher to somehow save headers :(
 - Add a picture to the actual Overcast Sonos service (although doesn't appear to be possible for self-installed apps)
