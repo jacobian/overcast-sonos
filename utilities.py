@@ -46,10 +46,15 @@ def duration_in_seconds(str):
     return seconds
 
 # Works out the final URL for those podcast platforms that redirect to another URL
+# If the redirected URL has a #t= timecode in it, we remove this as the Sonos player can't play these back, and it fixes compatibility with requests 2.19 and higher
 def final_redirect_url(url):
     redirected_url = requests.head(url, allow_redirects=True).url
     if url != redirected_url:
         log.debug('''Redirected url '%s' to '%s'.''', url, redirected_url)
+        if '#t=' in redirected_url:
+            log.debug('removing #t= from the URL for compatibility')
+            redirected_url = redirected_url.split("#t=")
+            return redirected_url[0]
     return redirected_url
 
 # Turns a string like 'Dec 2, 2020 • 171 min' or 'Jan 13 • 147 min' into a date
