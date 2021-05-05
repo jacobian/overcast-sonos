@@ -11,9 +11,13 @@
 
 * Assumes you've listed to an episode if there is less than 60 seconds remaining, due to Overcast rounding podcast lengths to the nearest minute
 
-Usage:
+**Requirements:**
 
-*Tested on Python 3.8.5 on Ubuntu 20.04*
+This should work on any recent version of Python 3. At the time of writing it has been tested on:
+ - Python 3.8.5 on Ubuntu 20.04
+ - Python 3.9.4 on Manjaro 21.0.3
+
+**Usage:**
 
 1. `pip install -r requirements.txt`
 
