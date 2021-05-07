@@ -1,5 +1,6 @@
 cssselect==1.1.0
 lxml>=4.3.0
+podsearch>=0.3.1
 PySimpleSOAP==1.16.2
 requests>=2.19.0
 wheel==0.36.2
