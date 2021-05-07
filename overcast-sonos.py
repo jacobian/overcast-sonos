@@ -174,13 +174,16 @@ def getMetadata(id, index, count, recursive=False):
         # Sort by name
         podcasts.sort(key=lambda item: item.get("title"))
         for podcast in podcasts:
-            if 'itunes' in podcast['id']:
-                itunesid = podcast['id'].split('/')
-                itunesid = itunesid[0][6:]
-                itunesinfo = podsearch.get(itunesid)
-                producer = itunesinfo.author
-            else:
-                producer = ''
+        # This is crashing on Ubuntu 20.04 for some reason. Will investigate.
+        #    if 'itunes' in podcast['id']:
+        #        itunesid = podcast['id'].split('/')
+        #        itunesid = itunesid[0][6:]
+        #        itunesinfo = podsearch.search(itunesid)
+        #        print(itunesid)
+        #        producer = itunesinfo.author
+        #        producer = ''
+        #    else:
+        #        producer = ''
             response['getMetadataResult'].append({'mediaCollection': {
                 'id': 'podcasts/' + podcast['id'],
                 'title': podcast['title'],
@@ -188,7 +191,7 @@ def getMetadata(id, index, count, recursive=False):
                 'itemType': 'album',
                 'semanticType': 'podcast',
                 'canPlay': False,
-                'producer': producer,
+        #        'producer': producer,
             }})
 
 # This is the display of a single podcasts recent episodes when it is selected from the 'Podcasts' section
