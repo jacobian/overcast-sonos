@@ -104,7 +104,7 @@ def getMetadata(id, index, count, recursive=False):
             {'mediaCollection': {
                 'id': 'podcasts',
                 'title': 'Subscribed Podcasts',
-                'itemType': 'albumList',
+                'itemType': 'collection',
                 'canPlay': False,
                 'albumArtURI': default_album_art_uri,
             }})
@@ -124,7 +124,7 @@ def getMetadata(id, index, count, recursive=False):
                 response['getMetadataResult'].append({
                     'mediaMetadata': {
                         'id': 'episodes/' + episode['id'],
-                        'title': episode['podcast_datetime'] + " - " + episode['title'],
+                        'title': episode['title'] + ' - ' + episode['podcast_datetime'].strip(),
                         'mimeType': episode['audio_type'],
                         'itemType': 'track',
                         'semanticType': 'episode.podcast',
@@ -170,6 +170,8 @@ def getMetadata(id, index, count, recursive=False):
         all_podcasts = overcast.get_all_podcasts()
         podcasts = all_podcasts[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(podcasts), 'total': len(all_podcasts)}]}
+        # Sort by name
+        podcasts.sort(key=lambda item: item.get("title"))
         for podcast in podcasts:
             response['getMetadataResult'].append({'mediaCollection': {
                 'id': 'podcasts/' + podcast['id'],
@@ -178,6 +180,7 @@ def getMetadata(id, index, count, recursive=False):
                 'itemType': 'album',
                 'semanticType': 'podcast',
                 'canPlay': False,
+                'producer': '',
             }})
 
 # This is the display of a single podcasts recent episodes when it is selected from the 'Podcasts' section
