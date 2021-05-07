@@ -174,16 +174,18 @@ def getMetadata(id, index, count, recursive=False):
         # Sort by name
         podcasts.sort(key=lambda item: item.get("title"))
         for podcast in podcasts:
-        # This is crashing on Ubuntu 20.04 for some reason. Will investigate.
-        #    if 'itunes' in podcast['id']:
-        #        itunesid = podcast['id'].split('/')
-        #        itunesid = itunesid[0][6:]
-        #        itunesinfo = podsearch.search(itunesid)
-        #        print(itunesid)
-        #        producer = itunesinfo.author
-        #        producer = ''
-        #    else:
-        #        producer = ''
+        # Uses podsearch to get extra info from iTunes. 
+        # This may crash on some systems. Solution is to remove libhttp2 or patch PySimpleSoap
+        # See https://github.com/pysimplesoap/pysimplesoap/pull/170 for details
+            if 'itunes' in podcast['id']:
+                itunesid = podcast['id'].split('/')
+                itunesid = itunesid[0][6:]
+                itunesinfo = podsearch.get(itunesid)
+                print(itunesid)
+                producer = itunesinfo.author
+                producer = ''
+            else:
+                producer = ''
             response['getMetadataResult'].append({'mediaCollection': {
                 'id': 'podcasts/' + podcast['id'],
                 'title': podcast['title'],
@@ -191,7 +193,7 @@ def getMetadata(id, index, count, recursive=False):
                 'itemType': 'album',
                 'semanticType': 'podcast',
                 'canPlay': False,
-        #        'producer': producer,
+                'producer': producer,
             }})
 
 # This is the display of a single podcasts recent episodes when it is selected from the 'Podcasts' section

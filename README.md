@@ -1,3 +1,4 @@
+
 # Play [Overcast](https://overcast.fm/) podcasts on your Sonos.
 
 **Features:**
@@ -14,7 +15,7 @@
 **Requirements:**
 
 This should work on any recent version of Python 3. At the time of writing it has been tested on:
- - Python 3.8.5 on Ubuntu 20.04
+ - Python 3.8.5 on Ubuntu 20.04 (See known issues below)
  - Python 3.9.4 on Manjaro 21.0.3
 
 **Usage:**
@@ -43,4 +44,10 @@ This should work on any recent version of Python 3. At the time of writing it ha
 
 *If you're reinstalling the app then increment the presentation map version, otherwise the previous one will be used. You also need to do this if an update is released with an updated presentation map!*
 
- See the [TODO list](./TODO.md) for some nice-to-haves.
+**To Do:**
+
+See the [TODO list](./TODO.md) for some nice-to-haves.
+
+**Known Issues:**
+
+ - Due to a bug in PySimpleSoap, systems that have libhttp2 installed (like Ubuntu) can cause the app to crash. The possible solutions are to remove libhttp2 using pip, or apply a patch to PySimpleSoap. See https://github.com/pysimplesoap/pysimplesoap/pull/170 for information.
