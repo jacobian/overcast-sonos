@@ -181,9 +181,7 @@ def getMetadata(id, index, count, recursive=False):
                 itunesid = podcast['id'].split('/')
                 itunesid = itunesid[0][6:]
                 itunesinfo = podsearch.get(itunesid)
-                print(itunesid)
                 producer = itunesinfo.author
-                producer = ''
             else:
                 producer = ''
             response['getMetadataResult'].append({'mediaCollection': {
