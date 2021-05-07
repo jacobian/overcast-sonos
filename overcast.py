@@ -44,7 +44,7 @@ class Overcast(object):
                         'id': urllib.parse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
                         'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
                         'audio_type': 'audio/mpeg',
-                        'podcast_title': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
+                        'podcast_datetime': cell.cssselect('div.titlestack div.caption2')[0].text_content(),
                         'albumArtURI': cell.cssselect('img')[0].attrib['src'],
                         'duration': -1,
                     })
