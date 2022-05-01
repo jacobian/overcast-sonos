@@ -1,0 +1,9 @@
+Use venv to create a new Python 3.x virtual environment.  Install venv using:
+	sudo apt install python3-venv
+Create a file called "overcast-sonos_service.conf" in the project directory containing two lines:
+	OVERCAST_USERNAME='email'
+	OVERCAST_PASSWORD='password'
+Install the overcast-sonos.service file using systemctl by first copying it to /etc/systemd/system and then starting it with:
+	sudo cp overcast-sonos.service /etc/systemd/system
+	sudo systemctl daemon-reload
+	sudo systemctl enable overcast-sonos.service
