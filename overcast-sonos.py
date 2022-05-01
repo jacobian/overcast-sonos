@@ -239,7 +239,7 @@ dispatcher.register_function(
 
 # for some reason, certain podcasts report the incorrect mime_type, fix them here manually
 def fixed_mimetype_for_episode(episode):
-    title = episode['podcast_title']
+    title = episode['title']
     if 'Group Therapy Radio' in title:
         log.debug('Forcing \'audio/mp4\' for the mime_type.')
         return 'audio/mp4'

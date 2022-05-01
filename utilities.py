@@ -6,6 +6,7 @@ Little utility functions to help you along :)
 
 import requests
 import logging
+import re
 from datetime import datetime
 
 log = logging.getLogger('overcast-sonos')
@@ -51,10 +52,13 @@ def final_redirect_url(url):
     redirected_url = requests.head(url, allow_redirects=True).url
     if url != redirected_url:
         log.debug('''Redirected url '%s' to '%s'.''', url, redirected_url)
-        if '#t=' in redirected_url:
-            log.debug('removing #t= from the URL for compatibility')
-            redirected_url = redirected_url.split("#t=")
-            return redirected_url[0]
+    
+    # for certain podcasts, the '#=' is added to the audio URL which causes Sonos to fail to connect
+    regex='#t=[0-9]*$'
+    if re.search(regex, redirected_url):
+        log.debug('Truncating the \'#t=\' part of the audio URL.')
+        redirected_url = re.sub(regex, '', redirected_url)
+
     return redirected_url
 
 # Turns a string like 'Dec 2, 2020 • 171 min' or 'Jan 13 • 147 min' into a date
