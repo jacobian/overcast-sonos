@@ -6,8 +6,8 @@ from overcast import Overcast, utilities
 from pysimplesoap.server import SoapDispatcher, SOAPHandler
 from http.server import HTTPServer
 
-#logging.basicConfig(level=logging.INFO)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('overcast-sonos')
 
 list_active_episodes_in_root = True
