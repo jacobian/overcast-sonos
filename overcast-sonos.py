@@ -7,6 +7,7 @@ from pysimplesoap.server import SoapDispatcher, SOAPHandler
 from http.server import HTTPServer
 
 logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('overcast-sonos')
 
 list_active_episodes_in_root = True
@@ -126,7 +127,7 @@ def getMetadata(id, index, count, recursive=False):
                     'mediaMetadata': {
                         'id': 'episodes/' + episode['id'],
                         'title': episode['title'] + ' - ' + episode['podcast_datetime'].strip(),
-                        'mimeType': episode['audio_type'],
+                        'mimeType': fixed_mimetype_for_episode(episode),
                         'itemType': 'track',
                         'semanticType': 'episode.podcast',
                         'trackMetadata': {
@@ -152,7 +153,7 @@ def getMetadata(id, index, count, recursive=False):
                 'mediaMetadata': {
                     'id': 'episodes/' + episode['id'],
                     'title': episode['title'],
-                    'mimeType': episode['audio_type'],
+                    'mimeType': fixed_mimetype_for_episode(episode),
                     'itemType': 'track',
                     'semanticType': 'episode.podcast',
                     'trackMetadata': {
@@ -235,6 +236,18 @@ dispatcher.register_function(
 )
 
 ###
+
+# for some reason, certain podcasts report the incorrect mime_type, fix them here manually
+def fixed_mimetype_for_episode(episode):
+    title = episode['title']
+    if 'Group Therapy Radio' in title:
+        log.debug('Forcing \'audio/mp4\' for the mime_type.')
+        return 'audio/mp4'
+    elif title == 'Monstercat: Call of the Wild' or title == 'Monstercat Silk Showcase':
+        log.debug('Forcing \'audio/mpeg\' for the mime_type.')
+        return 'audio/mpeg'
+    else:
+        return episode['audio_type']
 
 # Get the medtadata for a single item/episode
 def getMediaMetadata(id):
