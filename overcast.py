@@ -69,8 +69,11 @@ class Overcast(object):
 
         time_elapsed_seconds = int(doc.cssselect('audio#audioplayer')[0].attrib['data-start-time'])
         time_remaining_seconds = time_remaining_seconds or self.get_episode_time_remaining_seconds(episode_id, doc)
-        duration = time_elapsed_seconds + time_remaining_seconds
-        if time_elapsed_seconds == duration:
+        if time_remaining_seconds:
+            duration = time_elapsed_seconds + time_remaining_seconds
+            if time_elapsed_seconds == duration:
+                duration = -1
+        else:
             duration = -1
 
         return {
