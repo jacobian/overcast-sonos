@@ -107,20 +107,20 @@ class Overcast(object):
         for cell in doc.cssselect('a.extendedepisodecell'):
             if 'href' in cell.attrib:
                 # check to see if this episode is active / unplayed
-                prefix = ''
+                episode_prefix = ''
                 if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
-                    prefix = active_episode_prefix
+                    episode_prefix = active_episode_prefix
                 
                 # only continue if we are returning all episodes or if we are only returning active ones
-                if not active_only or (active_only and prefix != ''):
+                if not active_only or (active_only and episode_prefix != ''):
                     episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
-                    episode_title = f"{prefix}{cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')}"
+                    episode_title = cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')
                     summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
                     release_date = utilities.convert_release_date(summary)
 
                     episodes.append({
                         'id': episode_id,
-                        'title': episode_title,
+                        'title': f"{episode_prefix}{episode_title}",
                         'audio_type': 'audio/mpeg',
                         'podcast_title': podcast_title,
                         'albumArtURI': album_art_uri,
