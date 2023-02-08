@@ -11,6 +11,7 @@ import utilities
 import logging
 
 log = logging.getLogger('overcast-sonos')
+active_episode_prefix = '* '
 
 class Overcast(object):
     def __init__(self, email, password):
@@ -78,9 +79,7 @@ class Overcast(object):
             if 'href' in cell.attrib:
                 # perform a check to see if this podcast is active / unplayed
                 is_active = len(cell.cssselect('svg.unplayed_indicator')) > 0
-                if active_only and is_active:
-                    podcasts.append(self.create_podcast_from_cell(cell))
-                elif not active_only and not is_active:
+                if not active_only or (active_only and is_active):
                     podcasts.append(self.create_podcast_from_cell(cell))
 
         # sort the result by name
@@ -95,36 +94,39 @@ class Overcast(object):
             'albumArtURI': cell.cssselect('img')[0].attrib['src'],
         }
 
-    def get_all_podcast_episodes(self, podcast_id):
+    def get_all_podcast_episodes(self, podcast_id, active_only=False):
         """
         get all episodes (played or not) for a podcast.
         """
         podcast_href = urllib.parse.urljoin('https://overcast.fm', podcast_id)
         doc = self._get_html(podcast_href)
-        albumArtURI = doc.cssselect('img.art')[0].attrib['src']
+        album_art_uri = doc.cssselect('img.art')[0].attrib['src']
         podcast_title = doc.cssselect('h2.centertext')[0].text_content()
 
         episodes = []
         for cell in doc.cssselect('a.extendedepisodecell'):
             if 'href' in cell.attrib:
-                episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
-                title = cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')
-                summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
-                release_date = utilities.convert_release_date(summary)
-
-                # if it's a new episode, place an asterisk in the title
+                # check to see if this episode is active / unplayed
+                prefix = ''
                 if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
-                    title = f'* {title}'
+                    prefix = active_episode_prefix
+                
+                # only continue if we are returning all episodes or if we are only returning active ones
+                if not active_only or (active_only and prefix != ''):
+                    episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
+                    episode_title = f"{prefix}{cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')}"
+                    summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
+                    release_date = utilities.convert_release_date(summary)
 
-                episodes.append({
-                    'id': episode_id,
-                    'title': title,
-                    'audio_type': 'audio/mpeg',
-                    'podcast_title': podcast_title,
-                    'albumArtURI': albumArtURI,
-                    'summary': summary,
-                    'releasedate': release_date
-                })
+                    episodes.append({
+                        'id': episode_id,
+                        'title': episode_title,
+                        'audio_type': 'audio/mpeg',
+                        'podcast_title': podcast_title,
+                        'albumArtURI': album_art_uri,
+                        'summary': summary,
+                        'releasedate': release_date
+                    })
         return episodes
 
     def update_episode_offset(self, episode, updated_offset_seconds):
