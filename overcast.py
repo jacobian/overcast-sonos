@@ -12,9 +12,7 @@ import logging
 
 log = logging.getLogger('overcast-sonos')
 
-
 class Overcast(object):
-
     def __init__(self, email, password):
         self.session = requests.session()
         r = self.session.post('https://overcast.fm/login', {'email': email, 'password': password})
@@ -105,21 +103,29 @@ class Overcast(object):
         doc = self._get_html(podcast_href)
         albumArtURI = doc.cssselect('img.art')[0].attrib['src']
         podcast_title = doc.cssselect('h2.centertext')[0].text_content()
-        return [
-            # NOTE: If the hardcoded audio_type causes any problems, just uncomment the line below and comment out the dictionary below it.
-            # self.get_episode_detail(cell.attrib['href'])
-            {
-                'id': urllib.parse.urljoin('https://overcast.fm', cell.attrib['href']).lstrip('/'),
-                'title': cell.cssselect('div.titlestack div.title')[0].text_content(),
-                'audio_type': 'audio/mpeg',
-                'podcast_title': podcast_title,
-                'albumArtURI': albumArtURI,
-                'summary': cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', ''),
-                'releasedate' : utilities.convert_release_date(cell.cssselect('div.titlestack div.caption2')[0].text_content())
-            }
-            for cell in doc.cssselect('a.extendedepisodecell')
-            if 'href' in cell.attrib
-        ]
+
+        episodes = []
+        for cell in doc.cssselect('a.extendedepisodecell'):
+            if 'href' in cell.attrib:
+                episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
+                title = cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')
+                summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
+                release_date = utilities.convert_release_date(summary)
+
+                # if it's a new episode, place an asterisk in the title
+                if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
+                    title = f'* {title}'
+
+                episodes.append({
+                    'id': episode_id,
+                    'title': title,
+                    'audio_type': 'audio/mpeg',
+                    'podcast_title': podcast_title,
+                    'albumArtURI': albumArtURI,
+                    'summary': summary,
+                    'releasedate': release_date
+                })
+        return episodes
 
     def update_episode_offset(self, episode, updated_offset_seconds):
         log.debug("updated_offset_seconds = %d and duration = %d", updated_offset_seconds, episode['duration'])
