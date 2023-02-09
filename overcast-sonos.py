@@ -11,7 +11,8 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('overcast-sonos')
 default_album_art_uri = 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg'
 all_podcasts_id = 'all_podcasts'
-active_podcast_id_prefix = 'active_podcast'
+unplayed_podcasts_id = 'unplayed_podcasts'
+unplayed_podcast_id_prefix = 'podcast_unplayed'
 podcast_id_prefix = 'podcast'
 
 class customSOAPHandler(SOAPHandler):
@@ -90,10 +91,10 @@ def fixed_mimetype_for_episode(episode):
         return episode['audio_type']
 
 # returns a media collection object for a podcast entry
-def create_podcast_media_collection(podcast, active_only=False):
-    # the collection id will differ if it's an active podcast
-    if active_only:
-        id_prefix = active_podcast_id_prefix
+def create_podcast_media_collection(podcast, unplayed_only=False):
+    # the collection id will differ if it's an unplayed podcast
+    if unplayed_only:
+        id_prefix = unplayed_podcast_id_prefix
     else:
         id_prefix = podcast_id_prefix
 
@@ -128,38 +129,43 @@ def getMetadata(id, index, count, recursive=False):
     log.debug('at=getMetadata id=%s index=%s count=%s recursive=%s', id, index, count, recursive)
 
     if id == 'root':
-        # the root view will show a subcollection of the played podcasts along with any active podcasts
-        all_active_podcasts = overcast.get_all_podcasts(active_only=True)
-        podcasts = all_active_podcasts[index:index + count]
-        response = {'getMetadataResult': [{'index': index, 'count': len(podcasts) + 1, 'total': len(all_active_podcasts) + 1}]}
+        # the root view will show a 'all podcasts' subcollection, 'unplayed podcasts' subcollection, and any unplayed podcasts individually
+        all_unplayed_podcasts = overcast.get_all_podcasts(unplayed_only=True)
+        podcasts = all_unplayed_podcasts[index:index + count]
+        response = {'getMetadataResult': [{'index': index, 'count': len(podcasts) + 2, 'total': len(all_unplayed_podcasts) + 2}]}
 
-        # add a collection that will list all of the previously played podcasts
-        response['getMetadataResult'].append(
-            {'mediaCollection': {
-                'id': all_podcasts_id,
-                'title': 'All Podcasts',
-                'itemType': 'collection',
-                'canPlay': False,
-                'albumArtURI': default_album_art_uri,
-            }})
+        # add a collection that will list all podcasts
+        response['getMetadataResult'].append({'mediaCollection': {
+            'id': all_podcasts_id,
+            'title': 'All Podcasts',
+            'itemType': 'collection',
+            'canPlay': False,
+            'albumArtURI': default_album_art_uri
+        }})
 
-        # add any active podcasts that might exist
+        # add a collection that will list all unplayed podcasts
+        response['getMetadataResult'].append({'mediaCollection': {
+            'id': unplayed_podcasts_id,
+            'title': 'Unplayed Podcasts',
+            'itemType': 'collection',
+            'canPlay': False,
+            'albumArtURI': default_album_art_uri
+        }})
+
+        # add any unplayed podcasts that might exist
         for podcast in podcasts:
-            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, active_only=True)})
-    elif id == all_podcasts_id:
-        # this collection shows a list of all available podcasts
-        all_podcasts = overcast.get_all_podcasts()
+            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, unplayed_only=True)})
+    elif id == all_podcasts_id or id == unplayed_podcasts_id:
+        # this code path will create a collection shows a list of all podcasts or unplayed podcasts
+        all_podcasts = overcast.get_all_podcasts(unplayed_only=(id == unplayed_podcasts_id))
         podcasts = all_podcasts[index:index + count]
         response = {'getMetadataResult': [{'index': index, 'count': len(podcasts), 'total': len(all_podcasts)}]}
         for podcast in podcasts:
             response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast)})
-    elif id.startswith(active_podcast_id_prefix) or id.startswith(podcast_id_prefix):
-        # this collection will show all (or only active) episodes available for a given podcast
-        active_only = False
-        if id.startswith(active_podcast_id_prefix):
-            active_only = True
-        podcast_id = id.split('/', 1)[-1]
-        all_episodes = overcast.get_all_podcast_episodes(podcast_id, active_only=active_only)
+    elif id.startswith(podcast_id_prefix):
+        # this code path will show episodes available for a given podcast
+        id_prefix, podcast_id = id.split('/', 1)
+        all_episodes = overcast.get_all_podcast_episodes(podcast_id, unplayed_only=(id_prefix == unplayed_podcast_id_prefix))
         episodes = all_episodes[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(episodes), 'total': len(all_episodes)}]}
         for episode in episodes:

@@ -11,7 +11,7 @@ import utilities
 import logging
 
 log = logging.getLogger('overcast-sonos')
-active_episode_prefix = '* '
+unplayed_episode_prefix = '* '
 
 class Overcast(object):
     def __init__(self, email, password):
@@ -72,14 +72,14 @@ class Overcast(object):
         time_remaining_seconds = utilities.duration_in_seconds(unparsed_time_remaining)
         return time_remaining_seconds
 
-    def get_all_podcasts(self, active_only=False):
+    def get_all_podcasts(self, unplayed_only=False):
         podcasts = []
         doc = self._get_html('https://overcast.fm/podcasts')
         for cell in doc.cssselect('a.feedcell'):
             if 'href' in cell.attrib:
-                # perform a check to see if this podcast is active / unplayed
-                is_active = len(cell.cssselect('svg.unplayed_indicator')) > 0
-                if not active_only or (active_only and is_active):
+                # perform a check to see if this podcast is unplayed
+                unplayed = len(cell.cssselect('svg.unplayed_indicator')) > 0
+                if not unplayed_only or (unplayed_only and unplayed):
                     podcasts.append(self.create_podcast_from_cell(cell))
 
         # sort the result by name
@@ -94,7 +94,7 @@ class Overcast(object):
             'albumArtURI': cell.cssselect('img')[0].attrib['src'],
         }
 
-    def get_all_podcast_episodes(self, podcast_id, active_only=False):
+    def get_all_podcast_episodes(self, podcast_id, unplayed_only=False):
         """
         get all episodes (played or not) for a podcast.
         """
@@ -106,13 +106,13 @@ class Overcast(object):
         episodes = []
         for cell in doc.cssselect('a.extendedepisodecell'):
             if 'href' in cell.attrib:
-                # check to see if this episode is active / unplayed
+                # check to see if this episode is unplayed
                 episode_prefix = ''
                 if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
-                    episode_prefix = active_episode_prefix
+                    episode_prefix = unplayed_episode_prefix
                 
-                # only continue if we are returning all episodes or if we are only returning active ones
-                if not active_only or (active_only and episode_prefix != ''):
+                # only continue if we are returning all episodes or unplayed episodes
+                if not unplayed_only or (unplayed_only and episode_prefix != ''):
                     episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
                     episode_title = cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')
                     summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
