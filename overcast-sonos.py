@@ -161,7 +161,7 @@ def getMetadata(id, index, count, recursive=False):
         podcasts = all_podcasts[index:index + count]
         response = {'getMetadataResult': [{'index': index, 'count': len(podcasts), 'total': len(all_podcasts)}]}
         for podcast in podcasts:
-            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast)})
+            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, unplayed_only=(id == unplayed_podcasts_id))})
     elif id.startswith(podcast_id_prefix):
         # this code path will show episodes available for a given podcast
         id_prefix, podcast_id = id.split('/', 1)
