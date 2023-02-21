@@ -110,15 +110,14 @@ class Overcast(object):
                 episode_prefix = ''
                 if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
                     episode_prefix = unplayed_episode_prefix
-                
+
                 # only continue if we are returning all episodes or unplayed episodes
                 if not unplayed_only or (unplayed_only and episode_prefix != ''):
                     episode_id = urllib.parse.urljoin('https://overcast.fm', cell.attrib.get('href', '')).lstrip('/')
                     episode_title = cell.cssselect('div.titlestack div.title')[0].text_content().strip().replace('\n', '')
                     summary = cell.cssselect('div.titlestack div.caption2')[0].text_content().strip().replace('\n', '')
                     release_date = utilities.convert_release_date(summary)
-
-                    episodes.append({
+                    episode = {
                         'id': episode_id,
                         'title': f"{episode_prefix}{episode_title}",
                         'audio_type': 'audio/mpeg',
@@ -126,7 +125,13 @@ class Overcast(object):
                         'albumArtURI': album_art_uri,
                         'summary': summary,
                         'releasedate': release_date
-                    })
+                    }
+
+                    # if we're only returning the unplayed episodes, ensure those are displayed first
+                    if unplayed_only:
+                        episodes.insert(0, episode)
+                    else:
+                        episodes.append(episode)
         return episodes
 
     def update_episode_offset(self, episode, updated_offset_seconds):
