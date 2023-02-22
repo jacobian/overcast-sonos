@@ -14,6 +14,7 @@ all_podcasts_id = 'all_podcasts'
 unplayed_podcasts_id = 'unplayed_podcasts'
 unplayed_podcast_id_prefix = 'podcast_unplayed'
 podcast_id_prefix = 'podcast'
+report_play_seconds_interval = 45
 
 class customSOAPHandler(SOAPHandler):
     def do_GET(self):
@@ -286,7 +287,7 @@ def reportPlaySeconds(id, seconds, offsetMillis, contextId):
     episode = overcast.get_episode_detail(episode_id)
     overcast.update_episode_offset(episode, offsetMillis/1000)
     # This was originally set to 30 seconds, but it's been increased to help prevent rate limiting
-    return {'reportPlaySecondsResult': {'interval': 90}}
+    return {'reportPlaySecondsResult': {'interval': report_play_seconds_interval}}
 
 
 dispatcher.register_function(
