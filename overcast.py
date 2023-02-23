@@ -34,16 +34,18 @@ class Overcast(object):
 
         # check first to see if the episode is in the cache
         if episode_id in self.episode_cache:
+            log.debug('''retrieving episode details for \"%s\" from the cache''', episode_id)
             episode = self.episode_cache.pop(episode_id)
 
-            # if the episode duration was not correctly determined previously, we will attempt to get it again
-            if episode.get('duration', -1) == -1:
+            # if the offset was not specified or the episode duration was not correctly determined previously, invalidate this cached episode
+            if updated_offset_millis == -1 or episode.get('duration', -1) == -1:
                 episode = None
             elif updated_offset_millis > -1:
                 # update the time remaining
                 episode['offsetMillis'] = updated_offset_millis
         
         if not episode:
+            log.debug('''retrieving episode details for \"%s\" from Overcast''', episode_id)
             episode_href = urllib.parse.urljoin('https://overcast.fm', episode_id)
             doc = self._get_html(episode_href)
             audioplayer = doc.cssselect('audio#audioplayer')
@@ -76,8 +78,9 @@ class Overcast(object):
         if episode:
             self.episode_cache[episode_id] = episode
 
-            # check to see if an item needs to be purged from the episode cache
-            if len(self.episode_cache) > EPISODE_CACHE_SIZE:
+            # check to see if any episode(s) should be purged from the cache
+            while len(self.episode_cache) > EPISODE_CACHE_SIZE:
+                log.debug('removing an episode from the cache')
                 self.episode_cache.popitem(last=False)
 
         return episode
