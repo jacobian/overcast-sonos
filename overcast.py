@@ -9,12 +9,16 @@ import lxml.html
 import urllib.parse
 import utilities
 import logging
+from collections import OrderedDict
 
 log = logging.getLogger('overcast-sonos')
-unplayed_episode_prefix = '* '
+
+UNPLAYED_EPISODE_PREFIX = '* '
+EPISODE_CACHE_SIZE = 5
 
 class Overcast(object):
     def __init__(self, email, password):
+        self.episode_cache = OrderedDict()
         self.session = requests.session()
         r = self.session.post('https://overcast.fm/login', {'email': email, 'password': password})
         doc = lxml.html.fromstring(r.content)
@@ -25,36 +29,58 @@ class Overcast(object):
     def _get_html(self, url):
         return lxml.html.fromstring(self.session.get(url).content)
 
-    def get_episode_detail(self, episode_id, time_remaining_seconds=None):
-        episode_href = urllib.parse.urljoin('https://overcast.fm', episode_id)
-        doc = self._get_html(episode_href)
-        audioplayer = doc.cssselect('audio#audioplayer')
+    def get_episode_detail(self, episode_id, updated_offset_millis=-1):
+        episode = None
 
-        if len(audioplayer) > 0:
-            time_elapsed_seconds = int(audioplayer[0].attrib['data-start-time'])
-            time_remaining_seconds = time_remaining_seconds or self.get_episode_time_remaining_seconds(episode_id, doc)
-            if time_remaining_seconds:
-                duration = time_elapsed_seconds + time_remaining_seconds
-                if time_elapsed_seconds == duration:
+        # check first to see if the episode is in the cache
+        if episode_id in self.episode_cache:
+            episode = self.episode_cache.pop(episode_id)
+
+            # if the episode duration was not correctly determined previously, we will attempt to get it again
+            if episode.get('duration', -1) == -1:
+                episode = None
+            elif updated_offset_millis > -1:
+                # update the time remaining
+                episode['offsetMillis'] = updated_offset_millis
+        
+        if not episode:
+            episode_href = urllib.parse.urljoin('https://overcast.fm', episode_id)
+            doc = self._get_html(episode_href)
+            audioplayer = doc.cssselect('audio#audioplayer')
+
+            if len(audioplayer) > 0:
+                time_elapsed_seconds = int(audioplayer[0].attrib['data-start-time'])
+                time_remaining_seconds = self.get_episode_time_remaining_seconds(episode_id, doc)
+                if time_remaining_seconds:
+                    duration = time_elapsed_seconds + time_remaining_seconds
+                    if time_elapsed_seconds == duration:
+                        duration = -1
+                else:
                     duration = -1
-            else:
-                duration = -1
 
-            return {
-                'id': episode_href.lstrip('/'),
-                'title': doc.cssselect('div.centertext h2')[0].text_content(),
-                'podcast_title': doc.cssselect('div.centertext h3 a')[0].text_content(),
-                'offsetMillis': time_elapsed_seconds * 1000,
-                'duration': duration,
-                'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
-                'data_sync_version': doc.cssselect('audio#audioplayer')[0].attrib['data-sync-version'],
-                'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
-                'parsed_audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
-                'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
-                'delete_episode_uri': doc.cssselect('a#delete_episode_button')[0].attrib['href']
-            }
-        else:
-            return None
+                episode = {
+                    'id': episode_href.lstrip('/'),
+                    'title': doc.cssselect('div.centertext h2')[0].text_content(),
+                    'podcast_title': doc.cssselect('div.centertext h3 a')[0].text_content(),
+                    'offsetMillis': time_elapsed_seconds * 1000,
+                    'duration': duration,
+                    'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
+                    'data_sync_version': doc.cssselect('audio#audioplayer')[0].attrib['data-sync-version'],
+                    'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
+                    'parsed_audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
+                    'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
+                    'delete_episode_uri': doc.cssselect('a#delete_episode_button')[0].attrib['href']
+                }
+        
+        # add the episode to the cache
+        if episode:
+            self.episode_cache[episode_id] = episode
+
+            # check to see if an item needs to be purged from the episode cache
+            if len(self.episode_cache) > EPISODE_CACHE_SIZE:
+                self.episode_cache.popitem(last=False)
+
+        return episode
 
     def get_episode_time_remaining_seconds(self, episode_id, episode_html):
         log.debug('''getting the remaining time. episode id is %s''', episode_id)
@@ -65,6 +91,7 @@ class Overcast(object):
         for cell in doc.cssselect('a.extendedepisodecell'):
             if episode_id in cell.attrib['href']:
                 return self.get_episode_time_remaining_seconds_from_episode_cell(cell, True)
+        return None
 
     def get_episode_time_remaining_seconds_from_episode_cell(self, cell, is_extended_cell):
         unparsed_time_remaining_index = 1 if is_extended_cell else 2
@@ -109,7 +136,7 @@ class Overcast(object):
                 # check to see if this episode is unplayed
                 episode_prefix = ''
                 if 'usernewepisode' in cell.attrib.get('class', '').split(' '):
-                    episode_prefix = unplayed_episode_prefix
+                    episode_prefix = UNPLAYED_EPISODE_PREFIX
 
                 # only continue if we are returning all episodes or unplayed episodes
                 if not unplayed_only or (unplayed_only and episode_prefix != ''):

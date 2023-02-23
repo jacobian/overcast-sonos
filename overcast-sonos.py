@@ -9,12 +9,13 @@ logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(level=logging.DEBUG)
 
 log = logging.getLogger('overcast-sonos')
-default_album_art_uri = 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg'
-all_podcasts_id = 'all_podcasts'
-unplayed_podcasts_id = 'unplayed_podcasts'
-unplayed_podcast_id_prefix = 'podcast_unplayed'
-podcast_id_prefix = 'podcast'
-report_play_seconds_interval = 120
+
+DEFAULT_ALBUM_ART_URI = 'http://is3.mzstatic.com/image/thumb/Purple111/v4/20/5b/5e/205b5ef7-ee0e-7d0c-2d11-12f611c579f4/source/175x175bb.jpg'
+ALL_PODCASTS_ID = 'all_podcasts'
+UNPLAYED_PODCASTS_ID = 'unplayed_podcasts'
+UNPLAYED_PODCAST_ID_PREFIX = 'podcast_unplayed'
+PODCAST_ID_PREFIX = 'podcast'
+REPORT_PLAY_SECONDS_INTERVAL = 30
 
 class customSOAPHandler(SOAPHandler):
     def do_GET(self):
@@ -95,9 +96,9 @@ def fixed_mimetype_for_episode(episode):
 def create_podcast_media_collection(podcast, unplayed_only=False):
     # the collection id will differ if it's an unplayed podcast
     if unplayed_only:
-        id_prefix = unplayed_podcast_id_prefix
+        id_prefix = UNPLAYED_PODCAST_ID_PREFIX
     else:
-        id_prefix = podcast_id_prefix
+        id_prefix = PODCAST_ID_PREFIX
 
     return {
         'id': f"{id_prefix}/{podcast['id']}",
@@ -137,36 +138,36 @@ def getMetadata(id, index, count, recursive=False):
 
         # add a collection that will list all podcasts
         response['getMetadataResult'].append({'mediaCollection': {
-            'id': all_podcasts_id,
+            'id': ALL_PODCASTS_ID,
             'title': 'All Podcasts',
             'itemType': 'collection',
             'canPlay': False,
-            'albumArtURI': default_album_art_uri
+            'albumArtURI': DEFAULT_ALBUM_ART_URI
         }})
 
         # add a collection that will list all unplayed podcasts
         response['getMetadataResult'].append({'mediaCollection': {
-            'id': unplayed_podcasts_id,
+            'id': UNPLAYED_PODCASTS_ID,
             'title': 'Unplayed Podcasts',
             'itemType': 'collection',
             'canPlay': False,
-            'albumArtURI': default_album_art_uri
+            'albumArtURI': DEFAULT_ALBUM_ART_URI
         }})
 
         # add any unplayed podcasts that might exist
         for podcast in podcasts:
             response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, unplayed_only=True)})
-    elif id == all_podcasts_id or id == unplayed_podcasts_id:
+    elif id == ALL_PODCASTS_ID or id == UNPLAYED_PODCASTS_ID:
         # this code path will create a collection shows a list of all podcasts or unplayed podcasts
-        all_podcasts = overcast.get_all_podcasts(unplayed_only=(id == unplayed_podcasts_id))
+        all_podcasts = overcast.get_all_podcasts(unplayed_only=(id == UNPLAYED_PODCASTS_ID))
         podcasts = all_podcasts[index:index + count]
         response = {'getMetadataResult': [{'index': index, 'count': len(podcasts), 'total': len(all_podcasts)}]}
         for podcast in podcasts:
-            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, unplayed_only=(id == unplayed_podcasts_id))})
-    elif id.startswith(podcast_id_prefix):
+            response['getMetadataResult'].append({'mediaCollection': create_podcast_media_collection(podcast, unplayed_only=(id == UNPLAYED_PODCASTS_ID))})
+    elif id.startswith(PODCAST_ID_PREFIX):
         # this code path will show episodes available for a given podcast
         id_prefix, podcast_id = id.split('/', 1)
-        all_episodes = overcast.get_all_podcast_episodes(podcast_id, unplayed_only=(id_prefix == unplayed_podcast_id_prefix))
+        all_episodes = overcast.get_all_podcast_episodes(podcast_id, unplayed_only=(id_prefix == UNPLAYED_PODCAST_ID_PREFIX))
         episodes = all_episodes[index:index+count]
         response = {'getMetadataResult': [{'index': index, 'count': len(episodes), 'total': len(all_episodes)}]}
         for episode in episodes:
@@ -284,10 +285,9 @@ dispatcher.register_function(
 def reportPlaySeconds(id, seconds, offsetMillis, contextId):
     episode_id = id.rsplit('/', 1)[-1]
     log.debug('at=reportPlaySeconds and id=%s, seconds=%d, offsetMillis=%d, contextId=%s, episode_id=%s', id, seconds, offsetMillis, contextId, episode_id)
-    episode = overcast.get_episode_detail(episode_id)
+    episode = overcast.get_episode_detail(episode_id, offsetMillis)
     overcast.update_episode_offset(episode, offsetMillis/1000)
-    # This was originally set to 30 seconds, but it's been increased to help prevent rate limiting
-    return {'reportPlaySecondsResult': {'interval': report_play_seconds_interval}}
+    return {'reportPlaySecondsResult': {'interval': REPORT_PLAY_SECONDS_INTERVAL}}
 
 
 dispatcher.register_function(
@@ -300,7 +300,7 @@ dispatcher.register_function(
 def reportPlayStatus(id, status, offsetMillis, contextId):
     episode_id = id.rsplit('/', 1)[-1]
     log.debug('at=reportPlayStatus and id=%s, status=%s, contextId=%s, offsetMillis=%d, episode_id=%s', id, status, contextId, offsetMillis, episode_id)
-    episode = overcast.get_episode_detail(episode_id)
+    episode = overcast.get_episode_detail(episode_id, offsetMillis)
     overcast.update_episode_offset(episode, offsetMillis/1000)
 
 
@@ -314,7 +314,7 @@ dispatcher.register_function(
 def setPlayedSeconds(id, seconds, offsetMillis, contextId):
     episode_id = id.rsplit('/', 1)[-1]
     log.debug('at=setPlayedSeconds and id=%s, seconds=%d, offsetMillis=%d, contextId=%s, episode_id=%s', id, seconds, offsetMillis, contextId, episode_id)
-    episode = overcast.get_episode_detail(episode_id)
+    episode = overcast.get_episode_detail(episode_id, offsetMillis)
     overcast.update_episode_offset(episode, offsetMillis/1000)
 
 
