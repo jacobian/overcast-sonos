@@ -14,7 +14,7 @@ all_podcasts_id = 'all_podcasts'
 unplayed_podcasts_id = 'unplayed_podcasts'
 unplayed_podcast_id_prefix = 'podcast_unplayed'
 podcast_id_prefix = 'podcast'
-report_play_seconds_interval = 45
+report_play_seconds_interval = 120
 
 class customSOAPHandler(SOAPHandler):
     def do_GET(self):
