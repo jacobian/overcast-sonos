@@ -51,26 +51,33 @@ class Overcast(object):
             audioplayer = doc.cssselect('audio#audioplayer')
 
             if len(audioplayer) > 0:
+                title = doc.cssselect('div.centertext h2')[0].text_content()
                 time_elapsed_seconds = int(audioplayer[0].attrib['data-start-time'])
                 time_remaining_seconds = self.get_episode_time_remaining_seconds(episode_id, doc)
-                if time_remaining_seconds:
+                if time_remaining_seconds and time_remaining_seconds != -1:
                     duration = time_elapsed_seconds + time_remaining_seconds
                     if time_elapsed_seconds == duration:
                         duration = -1
                 else:
-                    duration = -1
+                    # if the time remaining could not be determined, "hack" the duration for known podcasts here
+                    if "Scorchin’ Radio" in title:
+                        log.debug("Overriding the duration for \"Scorchin' Radio\" podcast")
+                        duration = 3600
+                    else:
+                        duration = -1
 
+                audioplayer_source = doc.cssselect('audio#audioplayer source')
                 episode = {
                     'id': episode_href.lstrip('/'),
-                    'title': doc.cssselect('div.centertext h2')[0].text_content(),
+                    'title': title,
                     'podcast_title': doc.cssselect('div.centertext h3 a')[0].text_content(),
                     'offsetMillis': time_elapsed_seconds * 1000,
                     'duration': duration,
-                    'data_item_id': doc.cssselect('audio#audioplayer')[0].attrib['data-item-id'],
-                    'data_sync_version': doc.cssselect('audio#audioplayer')[0].attrib['data-sync-version'],
+                    'data_item_id': audioplayer[0].attrib['data-item-id'],
+                    'data_sync_version': audioplayer[0].attrib['data-sync-version'],
                     'albumArtURI': doc.cssselect('div.fullart_container img')[0].attrib['src'],
-                    'parsed_audio_uri': doc.cssselect('audio#audioplayer source')[0].attrib['src'],
-                    'audio_type': doc.cssselect('audio#audioplayer source')[0].attrib['type'],
+                    'parsed_audio_uri': audioplayer_source[0].attrib['src'],
+                    'audio_type': audioplayer_source[0].attrib['type'],
                     'delete_episode_uri': doc.cssselect('a#delete_episode_button')[0].attrib['href']
                 }
         

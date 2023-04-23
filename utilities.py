@@ -16,15 +16,18 @@ def duration_in_seconds(str):
     seconds = -1
     try:
         strings = str.split()
-        minuteIndex = strings.index('min') - 1
-        seconds = int(strings[minuteIndex]) * 60
+        if 'at' in strings:
+            log.debug('Duration could not be determined because Overcast is giving the start time instead of time left')
+            return seconds
+        else:
+            minuteIndex = strings.index('min') - 1
+            seconds = int(strings[minuteIndex]) * 60
+            log.debug('''Parsed the episode's duration in seconds from the string %s -> %d''', str, seconds)
+            return seconds
     except:
         log.debug('''Couldn't parse the episode's duration in seconds from the string %s.''', str)
-        pass
+        return seconds
 
-    log.debug('''Parsed the episode's duration in seconds from the string %s -> %d''', str, seconds)
-
-    return seconds
 
 # Works out the final URL for those podcast platforms that redirect to another URL
 # If the redirected URL has a #t= timecode in it, we remove this as the Sonos player can't play these back, and it fixes compatibility with requests 2.19 and higher
