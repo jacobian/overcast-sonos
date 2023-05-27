@@ -21,7 +21,7 @@ class customSOAPHandler(SOAPHandler):
     def do_GET(self):
         log.debug('PATH ==> %s', self.path)
         if self.path == '/presentation_map':
-            self.send_response(200)
+            self.send_response(http.HTTPStatus.OK)
             self.send_header('Content-type', 'text/xml')
             self.end_headers()
             self.wfile.write('''<?xml version="1.0" encoding="UTF-8"?>
